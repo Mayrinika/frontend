@@ -5,53 +5,50 @@ const API = {
     buhForms: '/api3/buh',
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(',');
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, 'analytics');
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, 'buhForms');
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    const orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(',');
+    const [requisites,analytics,buh]=await Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+        sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+        sendRequest(`${API.buhForms}?ogrn=${ogrns}`)]);
+    const orgsMap = reqsToMap(requisites);
+    addInOrgsMap(orgsMap, analytics, 'analytics');
+    addInOrgsMap(orgsMap, buh, 'buhForms');
+    render(orgsMap, orgOgrns);
 }
 
 run();
 
-function sendRequest (url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
+// function sendRequest(url) {
+//     return fetch(url).then(response =>{
+//         console.log(response);
+//         if(response.ok)
+//             alert(`Статус запроса: ${response.status}`);
+//         else
+//             response.json();
+//     });
+// }
 
-    xhr.onreadystatechange = function() {
-        if(xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
-
-    xhr.send();
+function sendRequest(url) {
+    return fetch(url).then(response =>response.json());
 }
 
-function reqsToMap (requisites) {
+
+function reqsToMap(requisites) {
     return requisites.reduce((acc, item) => {
         acc[item.ogrn] = item;
         return acc;
     }, {});
 }
 
-function addInOrgsMap (orgsMap, additionalInfo, key) {
+function addInOrgsMap(orgsMap, additionalInfo, key) {
     for (const item of additionalInfo) {
         orgsMap[item.ogrn][key] = item[key];
     }
 }
 
-function render (organizationsInfo, organizationsOrder) {
+function render(organizationsInfo, organizationsOrder) {
     const table = document.getElementById('organizations');
     table.classList.remove('hide');
 
@@ -64,7 +61,7 @@ function render (organizationsInfo, organizationsOrder) {
     });
 }
 
-function renderOrganization (orgInfo, template, container) {
+function renderOrganization(orgInfo, template, container) {
     const clone = document.importNode(template.content, true);
     const name = clone.querySelector('.name');
     const indebtedness = clone.querySelector('.indebtedness');
@@ -74,11 +71,11 @@ function renderOrganization (orgInfo, template, container) {
     name.textContent = (orgInfo.UL && orgInfo.UL.legalName && orgInfo.UL.legalName.short) || '';
     indebtedness.textContent = formatMoney(orgInfo.analytics.s1002 || 0);
 
-    if (orgInfo.buhForms && orgInfo.buhForms.length && orgInfo.buhForms[orgInfo.buhForms.length -1] &&
-        orgInfo.buhForms[orgInfo.buhForms.length -1].year === 2017) {
-        money.textContent = formatMoney((orgInfo.buhForms[orgInfo.buhForms.length -1].form2 &&
-            orgInfo.buhForms[orgInfo.buhForms.length -1].form2[0] &&
-            orgInfo.buhForms[orgInfo.buhForms.length -1].form2[0].endValue) || 0);
+    if (orgInfo.buhForms && orgInfo.buhForms.length && orgInfo.buhForms[orgInfo.buhForms.length - 1] &&
+        orgInfo.buhForms[orgInfo.buhForms.length - 1].year === 2017) {
+        money.textContent = formatMoney((orgInfo.buhForms[orgInfo.buhForms.length - 1].form2 &&
+            orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
+            orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0].endValue) || 0);
     } else {
         money.textContent = '—';
     }
@@ -89,7 +86,7 @@ function renderOrganization (orgInfo, template, container) {
     container.appendChild(clone);
 }
 
-function formatMoney (money) {
+function formatMoney(money) {
     let formatted = money.toFixed(2);
     formatted = formatted.replace('.', ',');
 
@@ -102,7 +99,7 @@ function formatMoney (money) {
     return `${formatted} ₽`;
 }
 
-function createAddress (address) {
+function createAddress(address) {
     const addressToRender = [];
     if (address.regionName) {
         addressToRender.push(createAddressItem('regionName'));
@@ -119,7 +116,7 @@ function createAddress (address) {
 
     return addressToRender.join(', ');
 
-    function createAddressItem (key) {
+    function createAddressItem(key) {
         return `${address[key].topoShortName}. ${address[key].topoValue}`;
     }
 }

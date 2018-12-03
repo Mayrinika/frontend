@@ -1,3 +1,7 @@
+import TaskQueue from './TaskQueue.js';
+import SpeedRate from './SpeedRate.js';
+import {getSpeedRate} from './SpeedRate.js';
+
 const PlayerView = function () {
     function PlayerView(playerRow, playerTable, inBottomRow) {
         this.inBottomRow = inBottomRow;
@@ -20,11 +24,11 @@ const PlayerView = function () {
     };
 
     PlayerView.prototype.signalHeal = function(continuation) {
-        signal(this.signal, SpeedRate.get(), 'heal', continuation);
+        signal(this.signal, getSpeedRate, 'heal', continuation);
     };
 
     PlayerView.prototype.signalDamage = function(continuation) {
-        signal(this.signal, SpeedRate.get(), 'damage', continuation);
+        signal(this.signal, getSpeedRate, 'damage', continuation);
     };
 
     PlayerView.prototype.signalTurnStart = function(continuation) {
@@ -54,3 +58,5 @@ const PlayerView = function () {
 
     return PlayerView;
 }();
+
+export default PlayerView;

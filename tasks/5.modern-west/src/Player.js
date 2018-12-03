@@ -1,3 +1,6 @@
+import TaskQueue from './TaskQueue.js';
+
+
 const PLAYER_MAX_POWER = 10;
 
 const Player = function () {
@@ -148,3 +151,5 @@ const Player = function () {
 
     return Player;
 }();
+
+export default Player;
