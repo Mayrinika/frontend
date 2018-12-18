@@ -18,13 +18,13 @@ function addListeners() {
     document.getElementById('movePlay')
         .addEventListener('click', function () {
             const block = document.getElementById('moveBlock');
-            animaster().move(block, 1000, {x: 100, y: 10});
+            animaster().addMove(1000, {x: 100, y: 10}).play(block);
         });
 
     document.getElementById('moveReset')
         .addEventListener('click', function () {
             const block = document.getElementById('moveBlock');
-            animaster().move(block, 1000, {x: 100, y: 10}).reset();
+            animaster().addMove(1000, {x: 100, y: 10}).play(block).reset();
         });
 
     document.getElementById('scalePlay')
@@ -54,13 +54,11 @@ function addListeners() {
     document.getElementById('moveAndHidePlay')
         .addEventListener('click', function () {
             const block = document.getElementById('moveAndHideBlock');
-            hide=animaster().moveAndHide(block, 5000);
+            hide = animaster().moveAndHide(block, 5000);
         });
 
     document.getElementById('moveAndHideReset')
         .addEventListener('click', function () {
-            // const block = document.getElementById('moveAndHideBlock');
-            // animaster().moveAndHide(block, 5000).reset();
             hide.reset();
 
         });
@@ -86,6 +84,8 @@ function addListeners() {
 
 function animaster() {
 
+    let _steps = [];
+
     function resetFadeIn(element) {
         element.classList.remove('show');
         element.classList.add('hide');
@@ -103,15 +103,16 @@ function animaster() {
     }
 
     return {
-        move: function (element, duration, translation) {
-            element.style.transitionDuration = `${duration}ms`;
-            element.style.transform = getTransform(translation, null);
-            return {
-                reset: function () {
-                    resetMoveAndScale(element);
-                }
-            }
-        },
+
+        // move: function (element, duration, translation) {
+        //     element.style.transitionDuration = `${duration}ms`;
+        //     element.style.transform = getTransform(translation, null);
+        //     return {
+        //         reset: function () {
+        //             resetMoveAndScale(element);
+        //         }
+        //     }
+        // },
 
         fadeIn: function fadeIn(element, duration) {
             element.style.transitionDuration = `${duration}ms`;
@@ -151,7 +152,7 @@ function animaster() {
             let hiding = 3 * duration / 5;
             element.style.transitionDuration = `${moving}ms`;
             element.style.transform = getTransform(translation, null);
-            let timer=setTimeout(() => {
+            let timer = setTimeout(() => {
                 element.style.transitionDuration = `${hiding}ms`;
                 element.classList.remove('show');
                 element.classList.add('hide');
@@ -197,6 +198,29 @@ function animaster() {
                 }
             }
         },
+
+        addMove: function (duration, {x, y}) {
+            let step = {
+                name: 'move',
+                duration: duration,
+                translation: {x: x, y: y}
+            };
+            this._steps.push(step);
+            return this;
+        },
+
+        play: function (element) {
+            element.style.transitionDuration = `${this._steps[this._steps.length-1].duration}ms`;
+            element.style.transform = getTransform(this._steps[this._steps.length-1].translation, null);
+            return {
+                reset: function () {
+                    resetMoveAndScale(element);
+                }
+            };
+        },
+
+        _steps: _steps,
+
     };
 }
 
